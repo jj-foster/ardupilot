@@ -17,6 +17,7 @@
 //  Modified by Paul Riseborough to implement a three loop autopilot
 //  topology
 //
+#include "AP_ExternalLimit.h"
 #include <AP_HAL/AP_HAL.h>
 #include "AP_YawController.h"
 #include <AP_AHRS/AP_AHRS.h>
@@ -243,10 +244,7 @@ int32_t AP_YawController::get_servo_out(float scaler, bool disable_integrator)
     //Calculate input to integrator
     float integ_in = - _K_I * (_K_A * accel_y + rate_hp_out);
 
-    if (integ_in * _external_residual > 0) {
-        integ_in = 0;
-    }
-    _external_residual = 0;
+    const float old_integrator = _integrator;
 
     // Apply integrator, but clamp input to prevent control saturation and freeze integrator below min FBW speed
     // Don't integrate if in stabilise mode as the integrator will wind up against the pilots inputs
@@ -267,6 +265,11 @@ int32_t AP_YawController::get_servo_out(float scaler, bool disable_integrator)
     } else {
         _integrator = 0;
     }
+
+    const auto external = AP_ExternalLimit::apply(old_integrator, _integrator, _external_residual);
+    _integrator = external.integrator;
+    _external_residual = 0;
+    _pid_info.limit = external.limited;
 
     if (_K_D < 0.0001f) {
         // yaw damping is disabled, and the integrator is scaled by damping, so return 0
@@ -326,10 +329,11 @@ float AP_YawController::get_rate_out(float desired_rate, float scaler, bool disa
     // range for IMAX in AC_PID applies (usually an IMAX value less than 1.0)
     rate_pid.update_all(radians(desired_rate) * scaler * scaler, rate_z * scaler * scaler, dt, limit_I);
 
-    const bool externally_limited = (rate_pid.get_i() - old_I) * _external_residual > 0;
+    const auto external = AP_ExternalLimit::apply(old_I, rate_pid.get_i(), _external_residual);
+    const bool externally_limited = external.limited;
     _external_residual = 0;
     if (externally_limited) {
-        rate_pid.set_integrator(old_I);
+        rate_pid.set_integrator(external.integrator);
     }
 
     if (underspeed) {
@@ -350,7 +354,6 @@ float AP_YawController::get_rate_out(float desired_rate, float scaler, bool disa
     // convert AC_PID info object to same scale as old controller
     _pid_info = rate_pid.get_pid_info();
     auto &pinfo = _pid_info;
-    pinfo.limit |= externally_limited;
 
     const float deg_scale = degrees(1);
     pinfo.FF = ff;

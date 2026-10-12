@@ -209,10 +209,7 @@ void XTail::setup_IO_failsafe() const
         const auto *servo = SRV_Channels::srv_channel(channel);
         for (uint8_t i = 0; i < 4; i++) {
             if (servo != nullptr && servo->get_function() == functions[i]) {
-                const float value = servo->get_reversed() ? -termination.output[i] : termination.output[i];
-                const float span = value < 0 ? servo->get_trim() - servo->get_output_min() :
-                                   servo->get_output_max() - servo->get_trim();
-                const uint16_t pwm = servo->get_trim() + value * span;
+                const uint16_t pwm = servo->pwm_from_scaled_value(4500.0f * termination.output[i]);
                 // Match the calibrated allocator output, including intermediate PWM.
                 hal.rcout->set_failsafe_pwm(1U << channel, pwm);
             }

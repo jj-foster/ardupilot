@@ -17,6 +17,7 @@
 //
 
 
+#include "AP_ExternalLimit.h"
 #include "AP_FW_Controller.h"
 #include <AP_AHRS/AP_AHRS.h>
 #include <AP_Scheduler/AP_Scheduler.h>
@@ -54,10 +55,11 @@ float AP_FW_Controller::_get_rate_out(float desired_rate, float scaler, bool dis
     // range for IMAX in AC_PID applies (usually an IMAX value less than 1.0)
     rate_pid.update_all(radians(desired_rate) * scaler * scaler, rate * scaler * scaler, dt, limit_I);
 
-    const bool externally_limited = (rate_pid.get_i() - old_I) * _external_residual > 0;
+    const auto external = AP_ExternalLimit::apply(old_I, rate_pid.get_i(), _external_residual);
+    const bool externally_limited = external.limited;
     _external_residual = 0;
     if (externally_limited) {
-        rate_pid.set_integrator(old_I);
+        rate_pid.set_integrator(external.integrator);
     }
 
     if (underspeed) {
