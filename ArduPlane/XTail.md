@@ -56,3 +56,5 @@ are outside this implementation. Consult retained reports for executed tests
 and failures; a compiled binary alone is not flight acceptance.
 
 XTLM records motor and surface limit masks in VTOL roll/pitch/yaw order (bits 0/1/2), without modifying motor flags. Zero-gain axes do not count as active surfaces in motors-only Q-assist.
+
+Compile-time removal also rejects native servo assignments at mandatory arming checks. Fixed-wing rate-controller tests exercise the actual AP_FW_Controller and AC_PID state/output paths, including opposing I, release and underspeed.

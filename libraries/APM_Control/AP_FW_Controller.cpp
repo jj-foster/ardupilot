@@ -81,6 +81,10 @@ float AP_FW_Controller::_get_rate_out(float desired_rate, float scaler, bool dis
     // convert AC_PID info object to same scale as old controller
     _pid_info = rate_pid.get_pid_info();
     auto &pinfo = _pid_info;
+    if (externally_limited) {
+        // AC_PID::set_integrator updates state, not its cached PID info.
+        pinfo.I = rate_pid.get_i();
+    }
     pinfo.limit |= externally_limited;
 
     const float deg_scale = degrees(1);

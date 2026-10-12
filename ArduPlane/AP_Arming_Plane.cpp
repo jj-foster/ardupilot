@@ -44,6 +44,25 @@ bool AP_Arming_Plane::terrain_database_required() const
   additional arming checks for plane
 
  */
+bool AP_Arming_Plane::xtail_checks(bool display_failure)
+{
+#if AP_PLANE_XTAIL_ENABLED
+    if (const char *error = plane.g2.xtail.configuration_error()) {
+        check_failed(display_failure, "%s", error);
+        return false;
+    }
+#else
+    for (uint8_t channel = 0; channel < NUM_SERVO_CHANNELS; channel++) {
+        const auto fn = SRV_Channels::channel_function(channel);
+        if (fn >= SRV_Channel::k_xtail_upper_left && fn <= SRV_Channel::k_xtail_lower_right) {
+            check_failed(display_failure, "X-tail support not included in build");
+            return false;
+        }
+    }
+#endif
+    return true;
+}
+
 bool AP_Arming_Plane::pre_arm_checks(bool display_failure)
 {
     if (armed || require == (uint8_t)Required::NO) {
@@ -55,12 +74,9 @@ bool AP_Arming_Plane::pre_arm_checks(bool display_failure)
         check_failed(display_failure, "System not initialised");
         return false;
     }
-#if AP_PLANE_XTAIL_ENABLED
-    if (const char *error = plane.g2.xtail.configuration_error()) {
-        check_failed(display_failure, "%s", error);
+    if (!xtail_checks(display_failure)) {
         return false;
     }
-#endif
     // are arming checks disabled?
     if (should_skip_all_checks()) {
         return mandatory_checks(display_failure);
@@ -146,12 +162,9 @@ bool AP_Arming_Plane::pre_arm_checks(bool display_failure)
 
 bool AP_Arming_Plane::mandatory_checks(bool display_failure)
 {
-#if AP_PLANE_XTAIL_ENABLED
-    if (const char *error = plane.g2.xtail.configuration_error()) {
-        check_failed(display_failure, "%s", error);
+    if (!xtail_checks(display_failure)) {
         return false;
     }
-#endif
 
     bool ret = true;
 
@@ -265,12 +278,9 @@ bool AP_Arming_Plane::ins_checks(bool display_failure)
 bool AP_Arming_Plane::arm_checks(AP_Arming::Method method)
 {
 
-#if AP_PLANE_XTAIL_ENABLED
-    if (const char *error = plane.g2.xtail.configuration_error()) {
-        check_failed(true, "%s", error);
+    if (!xtail_checks(true)) {
         return false;
     }
-#endif
     // are arming checks disabled?
     if (should_skip_all_checks()) {
         return true;

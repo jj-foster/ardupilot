@@ -354,6 +354,10 @@ float AP_YawController::get_rate_out(float desired_rate, float scaler, bool disa
     // convert AC_PID info object to same scale as old controller
     _pid_info = rate_pid.get_pid_info();
     auto &pinfo = _pid_info;
+    if (externally_limited) {
+        // AC_PID::set_integrator updates state, not its cached PID info.
+        pinfo.I = rate_pid.get_i();
+    }
 
     const float deg_scale = degrees(1);
     pinfo.FF = ff;

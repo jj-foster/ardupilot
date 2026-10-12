@@ -48,6 +48,7 @@ protected:
 
 private:
     void change_arm_state(void);
+    bool xtail_checks(bool display_failure);
 
     // oneshot with duration AP_ARMING_DELAY_MS used by quadplane to delay spoolup after arming:
     // ignored unless OPTION_DELAY_ARMING or OPTION_TILT_DISARMED is set
