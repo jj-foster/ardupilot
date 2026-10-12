@@ -25,6 +25,8 @@ public:
     // desired_rate is in deg/sec. scaler is the surface speed scaler
     float get_rate_out(float desired_rate, float scaler, bool disable_integrator);
 
+    void set_external_limit(float residual) { _external_residual = residual; }
+
     void reset_I();
 
     void reset_rate_PID();
@@ -65,6 +67,7 @@ private:
 
     uint32_t _last_t;
     float _last_out;
+    float _external_residual = 0;
     float _last_rate_hp_out;
     float _last_rate_hp_in;
     float _K_D_last;

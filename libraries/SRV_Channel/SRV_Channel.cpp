@@ -167,6 +167,7 @@ const AP_Param::GroupInfo SRV_Channel::var_info[] = {
     // @Values{Sub}: 181:Lights1,182:Lights2
     // @Values{Sub}: 183:VideoSwitch
     // @Values{Sub}: 184:Actuator1,185:Actuator2,186:Actuator3,187:Actuator4,188:Actuator5,189:Actuator6
+    // @Values{Plane}: 190:XTailUpperLeft,191:XTailUpperRight,192:XTailLowerLeft,193:XTailLowerRight
     // @User: Standard
     // @RebootRequired: True
     AP_GROUPINFO("FUNCTION",  5, SRV_Channel, function, 0),
@@ -359,6 +360,10 @@ bool SRV_Channel::is_control_surface(SRV_Channel::Function function)
     switch (function) {
     case Function::k_flap:
     case Function::k_flap_auto:
+    case Function::k_xtail_upper_left:
+    case Function::k_xtail_upper_right:
+    case Function::k_xtail_lower_left:
+    case Function::k_xtail_lower_right:
     case Function::k_aileron:
     case Function::k_dspoilerLeft1:
     case Function::k_dspoilerLeft2:

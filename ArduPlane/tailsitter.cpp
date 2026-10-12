@@ -223,8 +223,17 @@ void Tailsitter::setup()
                      SRV_Channels::function_assigned(SRV_Channel::k_tiltMotorRight)));
 
     _have_elevator = SRV_Channels::function_assigned(SRV_Channel::k_elevator);
+#if AP_PLANE_XTAIL_ENABLED
+    _have_elevator |= plane.g2.xtail.complete();
+#endif
     _have_aileron = SRV_Channels::function_assigned(SRV_Channel::k_aileron);
+#if AP_PLANE_XTAIL_ENABLED
+    _have_aileron |= plane.g2.xtail.complete();
+#endif
     _have_rudder = SRV_Channels::function_assigned(SRV_Channel::k_rudder);
+#if AP_PLANE_XTAIL_ENABLED
+    _have_rudder |= plane.g2.xtail.complete();
+#endif
     _have_elevon = SRV_Channels::function_assigned(SRV_Channel::k_elevon_left) || SRV_Channels::function_assigned(SRV_Channel::k_elevon_right);
     _have_v_tail = SRV_Channels::function_assigned(SRV_Channel::k_vtail_left) || SRV_Channels::function_assigned(SRV_Channel::k_vtail_right);
 
@@ -288,6 +297,15 @@ void Tailsitter::output(void)
         // if motor test is running we don't want to overwrite it with output_motor_mask or motors_output
         return;
     }
+
+#if AP_PLANE_XTAIL_ENABLED
+    const bool xtail = plane.g2.xtail.complete();
+    _have_elevator = xtail || SRV_Channels::function_assigned(SRV_Channel::k_elevator);
+    _have_aileron = xtail || SRV_Channels::function_assigned(SRV_Channel::k_aileron);
+    _have_rudder = xtail || SRV_Channels::function_assigned(SRV_Channel::k_rudder);
+#else
+    const bool xtail = false;
+#endif
 
     if (!hal.util->get_soft_armed() ||
         SRV_Channels::get_emergency_stop()) {
@@ -477,9 +495,9 @@ void Tailsitter::output(void)
 
     // Check for saturated limits
     bool tilt_lim = _is_vectored && ((fabsf(SRV_Channels::get_output_scaled(SRV_Channel::Function::k_tiltMotorLeft)) >= SERVO_MAX) || (fabsf(SRV_Channels::get_output_scaled(SRV_Channel::Function::k_tiltMotorRight)) >= SERVO_MAX));
-    bool roll_lim = _have_rudder && (fabsf(SRV_Channels::get_output_scaled(SRV_Channel::Function::k_rudder)) >= SERVO_MAX);
-    bool pitch_lim = _have_elevator && (fabsf(SRV_Channels::get_output_scaled(SRV_Channel::Function::k_elevator)) >= SERVO_MAX);
-    bool yaw_lim = _have_aileron && (fabsf(SRV_Channels::get_output_scaled(SRV_Channel::Function::k_aileron)) >= SERVO_MAX);
+    bool roll_lim = !xtail && _have_rudder && (fabsf(SRV_Channels::get_output_scaled(SRV_Channel::Function::k_rudder)) >= SERVO_MAX);
+    bool pitch_lim = !xtail && _have_elevator && (fabsf(SRV_Channels::get_output_scaled(SRV_Channel::Function::k_elevator)) >= SERVO_MAX);
+    bool yaw_lim = !xtail && _have_aileron && (fabsf(SRV_Channels::get_output_scaled(SRV_Channel::Function::k_aileron)) >= SERVO_MAX);
 
     // Mix elevons and V-tail, always giving full priority to pitch
     float elevator_mix = SRV_Channels::get_output_scaled(SRV_Channel::k_elevator) * (100.0 - plane.g.mixing_offset) * 0.01 * plane.g.mixing_gain;

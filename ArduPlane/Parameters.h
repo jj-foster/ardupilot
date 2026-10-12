@@ -3,6 +3,7 @@
 #define AP_PARAM_VEHICLE_NAME plane
 
 #include <AP_Common/AP_Common.h>
+#include "xtail.h"
 
 // Global parameter class.
 //
@@ -488,6 +489,9 @@ public:
 
     // just to make compilation easier when all things are compiled out...
     uint8_t unused_integer;
+#if AP_PLANE_XTAIL_ENABLED
+    XTail xtail;
+#endif
 
     // button reporting library
 #if HAL_BUTTON_ENABLED

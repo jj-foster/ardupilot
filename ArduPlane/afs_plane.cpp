@@ -28,6 +28,10 @@ void AP_AdvancedFailsafe_Plane::terminate_vehicle(void)
         SRV_Channels::set_slew_rate(SRV_Channel::k_flap_auto, 0.0, 100, plane.G_Dt);
         SRV_Channels::set_slew_rate(SRV_Channel::k_flap, 0.0, 100, plane.G_Dt);
 
+#if AP_PLANE_XTAIL_ENABLED
+        plane.g2.xtail.set_termination();
+#endif
+
         // aerodynamic termination is the default approach to termination
         SRV_Channels::set_output_scaled(SRV_Channel::k_flap_auto, 100.0);
         SRV_Channels::set_output_scaled(SRV_Channel::k_flap, 100.0);
@@ -61,6 +65,9 @@ void AP_AdvancedFailsafe_Plane::terminate_vehicle(void)
 
 void AP_AdvancedFailsafe_Plane::setup_IO_failsafe(void)
 {
+#if AP_PLANE_XTAIL_ENABLED
+    plane.g2.xtail.setup_IO_failsafe();
+#endif
     // all aux channels
     SRV_Channels::set_failsafe_limit(SRV_Channel::k_flap_auto, SRV_Channel::Limit::MAX);
     SRV_Channels::set_failsafe_limit(SRV_Channel::k_flap, SRV_Channel::Limit::MAX);

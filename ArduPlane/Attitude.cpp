@@ -429,6 +429,9 @@ void Plane::stabilize_yaw()
  */
 void Plane::stabilize()
 {
+#if AP_PLANE_XTAIL_ENABLED
+    g2.xtail.prepare_feedback();
+#endif
     uint32_t now = AP_HAL::millis();
 #if HAL_QUADPLANE_ENABLED
     if (quadplane.available()) {

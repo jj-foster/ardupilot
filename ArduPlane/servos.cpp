@@ -1000,6 +1000,9 @@ void Plane::indicate_waiting_for_rud_neutral_to_takeoff(void)
 {
     if (takeoff_state.waiting_for_rudder_neutral)  {
         SRV_Channels::set_output_scaled(SRV_Channel::k_rudder, 0);
+#if AP_PLANE_XTAIL_ENABLED
+        g2.xtail.output();
+#endif
         channel_function_mixer(SRV_Channel::k_rudder,  SRV_Channel::k_elevator, SRV_Channel::k_vtail_right, SRV_Channel::k_vtail_left);
         if (!SRV_Channels::function_assigned(SRV_Channel::k_rudder) && !SRV_Channels::function_assigned(SRV_Channel::k_vtail_left)) {
             // if no rudder indication possible, neutral elevons during wait because on takeoff stance they are usually both full up
@@ -1039,6 +1042,10 @@ void Plane::servos_output(void)
     // implement differential spoilers
     dspoiler_update();
 
+#if AP_PLANE_XTAIL_ENABLED
+    g2.xtail.output();
+#endif
+
     //  set control surface servos to neutral
     landing_neutral_control_surface_servos();
     
@@ -1049,7 +1056,11 @@ void Plane::servos_output(void)
 
     // support MANUAL_RCMASK
     if (g2.manual_rc_mask.get() != 0 && control_mode == &mode_manual) {
-        SRV_Channels::copy_radio_in_out_mask(uint32_t(g2.manual_rc_mask.get()));
+        uint32_t manual_mask = uint32_t(g2.manual_rc_mask.get());
+#if AP_PLANE_XTAIL_ENABLED
+        manual_mask &= ~g2.xtail.channel_mask();
+#endif
+        SRV_Channels::copy_radio_in_out_mask(manual_mask);
     }
 
     SRV_Channels::calc_pwm();

@@ -1279,6 +1279,12 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("GUIDED_TIMEOUT", 40, ParametersG2, guided_timeout, 3.0f),
 
+#if AP_PLANE_XTAIL_ENABLED
+    // @Group: XT_
+    // @Path: xtail.cpp
+    AP_SUBGROUPINFO(xtail, "XT_", 41, ParametersG2, XTail),
+#endif
+
     AP_GROUPEND
 };
 

@@ -46,6 +46,12 @@ public:
 	// empty destructor to suppress compiler warning
 	virtual ~AC_AttitudeControl_Multi() {}
 
+    void set_external_limits(bool roll, bool pitch, bool yaw) {
+        _external_roll_limit = roll;
+        _external_pitch_limit = pitch;
+        _external_yaw_limit = yaw;
+    }
+
     // pid accessors
     AC_PID& get_rate_roll_pid() override { return _pid_rate_roll; }
     AC_PID& get_rate_pitch_pid() override { return _pid_rate_pitch; }
@@ -89,6 +95,9 @@ public:
     static const struct AP_Param::GroupInfo var_info[];
 
 protected:
+    bool _external_roll_limit = false;
+    bool _external_pitch_limit = false;
+    bool _external_yaw_limit = false;
 
     // Boosts angle controller gains during rapid throttle changes to improve responsiveness
     // boost angle_p/pd each cycle on high throttle slew

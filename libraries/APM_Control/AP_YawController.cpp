@@ -243,6 +243,11 @@ int32_t AP_YawController::get_servo_out(float scaler, bool disable_integrator)
     //Calculate input to integrator
     float integ_in = - _K_I * (_K_A * accel_y + rate_hp_out);
 
+    if (integ_in * _external_residual > 0) {
+        integ_in = 0;
+    }
+    _external_residual = 0;
+
     // Apply integrator, but clamp input to prevent control saturation and freeze integrator below min FBW speed
     // Don't integrate if in stabilise mode as the integrator will wind up against the pilots inputs
     // Don't integrate if _K_D is zero as integrator will keep winding up
@@ -321,6 +326,12 @@ float AP_YawController::get_rate_out(float desired_rate, float scaler, bool disa
     // range for IMAX in AC_PID applies (usually an IMAX value less than 1.0)
     rate_pid.update_all(radians(desired_rate) * scaler * scaler, rate_z * scaler * scaler, dt, limit_I);
 
+    const bool externally_limited = (rate_pid.get_i() - old_I) * _external_residual > 0;
+    _external_residual = 0;
+    if (externally_limited) {
+        rate_pid.set_integrator(old_I);
+    }
+
     if (underspeed) {
         // when underspeed we lock the integrator
         rate_pid.set_integrator(old_I);
@@ -339,6 +350,7 @@ float AP_YawController::get_rate_out(float desired_rate, float scaler, bool disa
     // convert AC_PID info object to same scale as old controller
     _pid_info = rate_pid.get_pid_info();
     auto &pinfo = _pid_info;
+    pinfo.limit |= externally_limited;
 
     const float deg_scale = degrees(1);
     pinfo.FF = ff;
@@ -346,7 +358,7 @@ float AP_YawController::get_rate_out(float desired_rate, float scaler, bool disa
     pinfo.I *= deg_scale;
     pinfo.D *= deg_scale;
     pinfo.DFF = dff;
-    pinfo.limit = limit_I;
+    pinfo.limit = limit_I || externally_limited;
 
     // fix the logged target and actual values to not have the scalers applied
     pinfo.target = desired_rate;

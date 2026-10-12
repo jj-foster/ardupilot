@@ -54,6 +54,12 @@ float AP_FW_Controller::_get_rate_out(float desired_rate, float scaler, bool dis
     // range for IMAX in AC_PID applies (usually an IMAX value less than 1.0)
     rate_pid.update_all(radians(desired_rate) * scaler * scaler, rate * scaler * scaler, dt, limit_I);
 
+    const bool externally_limited = (rate_pid.get_i() - old_I) * _external_residual > 0;
+    _external_residual = 0;
+    if (externally_limited) {
+        rate_pid.set_integrator(old_I);
+    }
+
     if (underspeed) {
         // when underspeed we lock the integrator
         rate_pid.set_integrator(old_I);
@@ -73,6 +79,7 @@ float AP_FW_Controller::_get_rate_out(float desired_rate, float scaler, bool dis
     // convert AC_PID info object to same scale as old controller
     _pid_info = rate_pid.get_pid_info();
     auto &pinfo = _pid_info;
+    pinfo.limit |= externally_limited;
 
     const float deg_scale = degrees(1);
     pinfo.FF = ff;

@@ -55,6 +55,12 @@ bool AP_Arming_Plane::pre_arm_checks(bool display_failure)
         check_failed(display_failure, "System not initialised");
         return false;
     }
+#if AP_PLANE_XTAIL_ENABLED
+    if (const char *error = plane.g2.xtail.configuration_error()) {
+        check_failed(display_failure, "%s", error);
+        return false;
+    }
+#endif
     // are arming checks disabled?
     if (should_skip_all_checks()) {
         return mandatory_checks(display_failure);
@@ -140,6 +146,13 @@ bool AP_Arming_Plane::pre_arm_checks(bool display_failure)
 
 bool AP_Arming_Plane::mandatory_checks(bool display_failure)
 {
+#if AP_PLANE_XTAIL_ENABLED
+    if (const char *error = plane.g2.xtail.configuration_error()) {
+        check_failed(display_failure, "%s", error);
+        return false;
+    }
+#endif
+
     bool ret = true;
 
     ret &= rc_received_if_enabled_check(display_failure);
@@ -252,6 +265,12 @@ bool AP_Arming_Plane::ins_checks(bool display_failure)
 bool AP_Arming_Plane::arm_checks(AP_Arming::Method method)
 {
 
+#if AP_PLANE_XTAIL_ENABLED
+    if (const char *error = plane.g2.xtail.configuration_error()) {
+        check_failed(true, "%s", error);
+        return false;
+    }
+#endif
     // are arming checks disabled?
     if (should_skip_all_checks()) {
         return true;

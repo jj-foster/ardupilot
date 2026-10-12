@@ -152,6 +152,10 @@ void SRV_Channel::aux_servo_function_setup(void)
         break;
     case k_aileron_with_input:
     case k_elevator_with_input:
+    case k_xtail_upper_left:
+    case k_xtail_upper_right:
+    case k_xtail_lower_left:
+    case k_xtail_lower_right:
     case k_aileron:
     case k_elevator:
     case k_dspoilerLeft1:

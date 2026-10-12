@@ -19,6 +19,8 @@ public:
     // so should only be used when only one source of scaling is needed
     void set_ff_scale(float _ff_scale) { ff_scale = _ff_scale; }
 
+    void set_external_limit(float residual) { _external_residual = residual; }
+
     void reset_I();
 
     /*
@@ -49,6 +51,7 @@ protected:
     AP_AutoTune *autotune;
     bool failed_autotune_alloc;
     float _last_out;
+    float _external_residual = 0;
     AC_PID rate_pid;
     float angle_err_deg;
     float ff_scale = 1.0;
