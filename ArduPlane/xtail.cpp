@@ -104,6 +104,12 @@ bool XTail::complete() const
     return enabled() && configuration_error() == nullptr;
 }
 
+bool XTail::axis_active(uint8_t axis) const
+{
+    const float gains[] = {_roll_gain, _pitch_gain, _yaw_gain};
+    return axis < 3 && is_positive(gains[axis]);
+}
+
 uint32_t XTail::channel_mask() const
 {
     uint32_t mask = 0;
@@ -184,6 +190,18 @@ void XTail::output()
     const uint32_t now = AP_HAL::millis();
     if (now - _last_log_ms >= 50) {
         _last_log_ms = now;
+        uint8_t motor_limits = 0;
+#if HAL_QUADPLANE_ENABLED
+        if (plane.quadplane.initialised) {
+            const auto &limits = plane.quadplane.motors->limit;
+            motor_limits = (limits.roll ? 1U : 0U) | (limits.pitch ? 2U : 0U) | (limits.yaw ? 4U : 0U);
+        }
+#endif
+        const uint8_t surface_limits = (fabsf(_last.residual[2]) > 1.0e-6f ? 1U : 0U) |
+                                       (fabsf(_last.residual[1]) > 1.0e-6f ? 2U : 0U) |
+                                       (fabsf(_last.residual[0]) > 1.0e-6f ? 4U : 0U);
+        AP::logger().WriteStreaming("XTLM", "TimeUS,Motor,Surface", "QBB",
+                                   AP_HAL::micros64(), motor_limits, surface_limits);
         // 20 Hz rather than the 400 Hz output cycle; correlate with PID/RCOU/TSIT.
         AP::logger().WriteStreaming("XTAL", "TimeUS,Mode,Q,R,P,Y,UL,UR,LL,LR,Lam,RR,PR,YR",
                                    "QBBfffffffffff", AP_HAL::micros64(), _last_mode, uint8_t(_last_vtol),

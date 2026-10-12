@@ -224,15 +224,15 @@ void Tailsitter::setup()
 
     _have_elevator = SRV_Channels::function_assigned(SRV_Channel::k_elevator);
 #if AP_PLANE_XTAIL_ENABLED
-    _have_elevator |= plane.g2.xtail.complete();
+    _have_elevator |= plane.g2.xtail.complete() && plane.g2.xtail.axis_active(1);
 #endif
     _have_aileron = SRV_Channels::function_assigned(SRV_Channel::k_aileron);
 #if AP_PLANE_XTAIL_ENABLED
-    _have_aileron |= plane.g2.xtail.complete();
+    _have_aileron |= plane.g2.xtail.complete() && plane.g2.xtail.axis_active(0);
 #endif
     _have_rudder = SRV_Channels::function_assigned(SRV_Channel::k_rudder);
 #if AP_PLANE_XTAIL_ENABLED
-    _have_rudder |= plane.g2.xtail.complete();
+    _have_rudder |= plane.g2.xtail.complete() && plane.g2.xtail.axis_active(2);
 #endif
     _have_elevon = SRV_Channels::function_assigned(SRV_Channel::k_elevon_left) || SRV_Channels::function_assigned(SRV_Channel::k_elevon_right);
     _have_v_tail = SRV_Channels::function_assigned(SRV_Channel::k_vtail_left) || SRV_Channels::function_assigned(SRV_Channel::k_vtail_right);
@@ -300,9 +300,9 @@ void Tailsitter::output(void)
 
 #if AP_PLANE_XTAIL_ENABLED
     const bool xtail = plane.g2.xtail.complete();
-    _have_elevator = xtail || SRV_Channels::function_assigned(SRV_Channel::k_elevator);
-    _have_aileron = xtail || SRV_Channels::function_assigned(SRV_Channel::k_aileron);
-    _have_rudder = xtail || SRV_Channels::function_assigned(SRV_Channel::k_rudder);
+    _have_elevator = (xtail && plane.g2.xtail.axis_active(1)) || SRV_Channels::function_assigned(SRV_Channel::k_elevator);
+    _have_aileron = (xtail && plane.g2.xtail.axis_active(0)) || SRV_Channels::function_assigned(SRV_Channel::k_aileron);
+    _have_rudder = (xtail && plane.g2.xtail.axis_active(2)) || SRV_Channels::function_assigned(SRV_Channel::k_rudder);
 #else
     const bool xtail = false;
 #endif
@@ -397,8 +397,12 @@ void Tailsitter::output(void)
             const float dt = quadplane.attitude_control->get_dt_s();
 
             // VTOL yaw / FW roll
-            quadplane.attitude_control->get_rate_yaw_pid().relax_integrator(0.0, dt, AC_ATTITUDE_RATE_RELAX_TC);
-            motors->limit.yaw = true;
+            if (!xtail || _have_aileron || _have_elevon) {
+                quadplane.attitude_control->get_rate_yaw_pid().relax_integrator(0.0, dt, AC_ATTITUDE_RATE_RELAX_TC);
+                motors->limit.yaw = true;
+            } else {
+                plane.rollController.reset_I();
+            }
 
             // VTOL and FW pitch
             if (_have_elevator || _have_elevon || _have_v_tail) {

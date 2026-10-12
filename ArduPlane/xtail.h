@@ -14,6 +14,7 @@ public:
     XTail();
     bool enabled() const { return _enable == 1; }
     bool complete() const;
+    bool axis_active(uint8_t axis) const;
     const char *configuration_error() const;
     uint32_t channel_mask() const;
     void prepare_feedback();

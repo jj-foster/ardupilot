@@ -40,7 +40,7 @@ logical axis demands so tailsitter output cannot overwrite it. The IO failsafe
 uses its corresponding calibrated PWM values. The stock VTOL-land termination
 action continues to select QLAND.
 
-XTAL and XTRQ logs at 20 Hz record mode, controller selection, body-axis demands,
+XTAL, XTRQ and XTLM logs at 20 Hz record mode, controller selection, body-axis demands,
 requested/applied outputs, limiter scale and residuals. Correlate these with
 PIDR/PIDP/PIDY, PIQR/PIQP/PIQY, RCOU, TSIT and physics logs. Logging remains under
 HAL_LOGGING_ENABLED. AP_PLANE_XTAIL_ENABLED permits compile-time removal.
@@ -54,3 +54,5 @@ post-stall assumptions are unvalidated. Surface travel saturation does not
 detect stall. Hardware flight qualification and dynamic motor/tail allocation
 are outside this implementation. Consult retained reports for executed tests
 and failures; a compiled binary alone is not flight acceptance.
+
+XTLM records motor and surface limit masks in VTOL roll/pitch/yaw order (bits 0/1/2), without modifying motor flags. Zero-gain axes do not count as active surfaces in motors-only Q-assist.
